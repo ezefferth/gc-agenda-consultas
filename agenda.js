@@ -6,14 +6,39 @@ const CHAVE = "agenda-consultas";
 const formulario = document.getElementById("formulario");
 const mensagem = document.getElementById("mensagem");
 const lista = document.getElementById("lista");
+const aviso = document.getElementById("aviso");
+
+// O localStorage nem sempre esta disponivel: abrindo o arquivo direto do disco
+// (file://), em aba anonima, ou com o navegador bloqueando dados de site, o
+// acesso lanca excecao. Quando isso acontece a agenda continua funcionando na
+// memoria; so nao guarda ao fechar a pagina.
+let memoria = [];
+let temArmazenamento = true;
+
+function semArmazenamento() {
+  temArmazenamento = false;
+  if (aviso) aviso.hidden = false;
+}
 
 function carregar() {
-  const salvo = localStorage.getItem(CHAVE);
-  return salvo ? JSON.parse(salvo) : [];
+  if (!temArmazenamento) return memoria;
+  try {
+    const salvo = localStorage.getItem(CHAVE);
+    return salvo ? JSON.parse(salvo) : [];
+  } catch (erro) {
+    semArmazenamento();
+    return memoria;
+  }
 }
 
 function salvar(consultas) {
-  localStorage.setItem(CHAVE, JSON.stringify(consultas));
+  memoria = consultas;
+  if (!temArmazenamento) return;
+  try {
+    localStorage.setItem(CHAVE, JSON.stringify(consultas));
+  } catch (erro) {
+    semArmazenamento();
+  }
 }
 
 function horarioOcupado(consultas, nova) {
